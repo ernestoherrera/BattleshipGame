@@ -1,9 +1,6 @@
-﻿using Battleship.Enums;
+﻿using BattleshipGame.Enums;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BattleshipGame.DataStructures
 {
@@ -13,8 +10,8 @@ namespace BattleshipGame.DataStructures
     internal class BattleshipBoard
     {
         private const int MINIMUM_BOARD_SIZE = 4;
-        //The Key value of the dictionary represent the X coordinates
-        //The Value represents an array where the index represents the Y coordinates.
+        //The Key value of the dictionary represent the Y coordinates
+        //The Value represents an array where the index represents the X coordinates.
         //This board is used to keep track of the ships and opponents shots
         private Dictionary<int, SeaSquare[]> _board = new Dictionary<int, SeaSquare[]>();
 
@@ -30,10 +27,15 @@ namespace BattleshipGame.DataStructures
 
             for (var i = 0; i < size; i++)
             {
-                _board.Add(i, new SeaSquare[size]);
-                _OpponentsBoard.Add(i, new SeaSquare[size]);
+                var seaSquareRow = GetSeaSquareRow(size);
+                var seaSquareRowOpponent = GetSeaSquareRow(size);
+
+                _board.Add(i, seaSquareRow);
+                _OpponentsBoard.Add(i, seaSquareRowOpponent);
             }
         }
+
+        public Dictionary<int, SeaSquare[]> Board { get { return _board; } }
 
         /// <summary>
         /// Gets a sea-square from a board
@@ -41,7 +43,7 @@ namespace BattleshipGame.DataStructures
         /// <param name="board"></param>
         /// <param name="coord"></param>
         /// <returns></returns>
-        public SeaSquare GetSeaSquare(Dictionary<int, SeaSquare[]> board, Coordinate coord)
+        private SeaSquare GetSeaSquare(Dictionary<int, SeaSquare[]> board, Coordinate coord)
         {
             if (coord == null)
             {
@@ -73,17 +75,25 @@ namespace BattleshipGame.DataStructures
             if (seaSquare.HasBeenShot)
             {
                 //This coordinates have already been processed.
-                return (seaSquare.HasBattleship) ? ShotResponse.Hit : ShotResponse.Miss;
+                if (seaSquare.HasBattleship)
+                {
+                    var isBattleshipSunk = seaSquare.Battleship.IsBattleshipSunk();
+
+                    if (seaSquare.BattleshipSquare != null & !seaSquare.BattleshipSquare.IsShot)
+                        seaSquare.BattleshipSquare.IsShot = true;
+
+                    return isBattleshipSunk ? ShotResponse.Sunk : ShotResponse.Hit;
+                }
+
+                return ShotResponse.Miss;
             }
 
             seaSquare.HasBeenShot = true;
 
             if (seaSquare.HasBattleship)
             {
-                if (seaSquare.BattleshipPart != null && !seaSquare.BattleshipPart.IsShot)
-                {
-                    seaSquare.BattleshipPart.IsShot = true;
-                }
+                if (seaSquare.BattleshipSquare != null && !seaSquare.BattleshipSquare.IsShot)
+                    seaSquare.BattleshipSquare.IsShot = true;
 
                 return seaSquare.Battleship.IsBattleshipSunk() ? ShotResponse.Sunk : ShotResponse.Hit;
             }
@@ -106,15 +116,109 @@ namespace BattleshipGame.DataStructures
 
             if (HasShotThereBefore(coord))
             {
-                //Do analysis of the board and try to shoot again?
+                Console.WriteLine("You have shot there before. You can't win the game by shooting the same place twice.");
+                return;
             }
             else
             {
                 var response = (ShotResponse)int.Parse(Console.ReadLine());
-                //process the response?
+
+                //store the opponents shot result on the opponents board
+                var seaSquare = GetSeaSquare(_OpponentsBoard, coord);
+
+                switch (response)
+                {
+                    case ShotResponse.Miss:
+                        seaSquare.HasBeenShot = true;
+                        break;
+                    case ShotResponse.Hit:
+
+                        seaSquare.HasBeenShot = true;
+                        if (seaSquare.BattleshipSquare == null)
+                        {
+                            var battleshipSquare = new BattleshipSquare(coord);
+                            battleshipSquare.IsShot = true;
+
+                            seaSquare.AddBattleshipSquare(battleshipSquare);
+
+                        }
+                        else
+                        {
+                            // if it falls in here, it has been shot before.
+                            seaSquare.BattleshipSquare.IsShot = true;
+                        }
+                        break;
+                    case ShotResponse.Sunk:
+                        
+                        if (seaSquare.Battleship != null)
+                        {
+                            seaSquare.Battleship.SunkBattleship();
+                        }
+                        break;
+                    default:
+                        Console.WriteLine("Unknown response.");
+                        Console.WriteLine("Appropriate values: [1] Miss, [2] Hit, [3] Sunk");
+                        break;
+                }
             }
         }
 
+        /// <summary>
+        /// Make sure there is no conflict with an existing battleship
+        /// </summary>
+        /// <param name="battleship"></param>
+        /// <returns></returns>
+        public bool CanAddBattleship(Battleship battleship)
+        {
+            //TODO: Make sure there is no conflict with an existing battleship
+            return true;
+        }
+
+        /// <summary>
+        /// Links all BattleshipSquares to its respective SeaSquare
+        /// </summary>
+        /// <param name="battleship"></param>
+        public void PositionBattleship(Battleship battleship)
+        {
+            if (battleship == null)
+            {
+                throw new ArgumentNullException(nameof(battleship));
+            }
+
+            var current = battleship.First;
+
+            while (current != null)
+            {
+                var battleshipCoord = current.Value.Coordinate;
+                var seaSquare = GetSeaSquare(_board, battleshipCoord);
+
+                seaSquare.LinkBattleshipSquare(current.Value);
+                seaSquare.LinkBattleship(battleship);
+                current = current.Next;
+            }
+        }
+
+        public void DisplayBoard()
+        {
+            foreach (var item in _board)
+            {
+                var seaSquares = item.Value;
+                foreach (var seaSquare in seaSquares)
+                {
+                    if (seaSquare.HasBattleship)
+                        Console.Write(" + ");
+                    else
+                        Console.Write(" - ");
+                }
+                Console.WriteLine();
+            }
+        }
+
+        /// <summary>
+        /// Checks if it has been shot before.
+        /// </summary>
+        /// <param name="coord"></param>
+        /// <returns></returns>
         private bool HasShotThereBefore(Coordinate coord)
         {
             if (coord == null)
@@ -124,12 +228,32 @@ namespace BattleshipGame.DataStructures
 
             var seaSquare = GetSeaSquare(_OpponentsBoard, coord);
 
-            if (seaSquare != null && seaSquare.HasBeenShot)
-            {
-                Console.WriteLine("You have shot there before. You can't win the game by shooting the same place twice.");
-                return true;
-            }
-            return false;
+            return (seaSquare != null && seaSquare.HasBeenShot) ? true : false;
+
         }
+
+        /// <summary>
+        /// Builds the sea squares for the board
+        /// </summary>
+        /// <param name="size"></param>
+        /// <returns></returns>
+        private SeaSquare[] GetSeaSquareRow(int size)
+        {
+            if (size <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(size));
+            }
+
+            var seaSquareArray = new SeaSquare[size];
+
+            for (int i = 0; i < size; i++)
+            {
+                var seaSquare = new SeaSquare();
+                seaSquareArray[i] = seaSquare;
+            }
+
+            return seaSquareArray;
+        }
+
     }
 }

@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Battleship.Enums
+namespace BattleshipGame.Enums
 {
     enum ShipStatus { Sink, Afloat}
-    enum ShotResponse { Miss, Hit, Sunk }
+    enum ShotResponse { Miss = 1, Hit, Sunk }
 }

@@ -15,11 +15,13 @@ namespace BattleshipGame.DataStructures
         {
             _isSunk = false;
             BuildBattleship(battleshipParts);
-            Length = battleshipParts.Length;
         }
 
         private bool _isSunk { get; set; }
 
+        /// <summary>
+        /// Battleship size
+        /// </summary>
         public int Length { get; internal set; }
 
         /// <summary>
@@ -77,16 +79,53 @@ namespace BattleshipGame.DataStructures
 
             for (var i = 0; i < battleshipNodes.Length; i++)
             {
-                var node = new LinkedListNode<BattleshipSquare>(battleshipNodes[i]);
-                if (First == null)
-                {
-                    AddFirst(node);
-                }
-                else
-                {
-                    AddLast(node);
-                }
+                AddSingleBattleshipPart(battleshipNodes[i]);
+                Length++;
             }
+        }
+
+        /// <summary>
+        /// Adds one battleship part of the battleship.
+        /// It helps keeping track of the opponents battleships
+        /// </summary>
+        /// <param name="battleshipPart"></param>
+        public void AddBattleshipPart(BattleshipSquare battleshipPart)
+        {
+            AddSingleBattleshipPart(battleshipPart);
+            Length++;
+        }
+
+        /// <summary>
+        /// Adds one battleship part of the battleship.
+        /// </summary>
+        /// <param name="battleshipPart"></param>
+        private void AddSingleBattleshipPart(BattleshipSquare battleshipPart)
+        {
+            var node = new LinkedListNode<BattleshipSquare>(battleshipPart);
+            if (First == null)
+            {
+                AddFirst(node);
+            }
+            else
+            {
+                AddLast(node);
+            }
+        }
+
+        /// <summary>
+        /// Sinks the battleship if the ShotResponse is Sink.
+        /// </summary>
+        public void SunkBattleship()
+        {
+            var current = First;
+
+            while (current != null)
+            {
+                current.Value.IsShot = true;
+                current = current.Next;
+            }
+
+            _isSunk = true;
         }
     }
 }

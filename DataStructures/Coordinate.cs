@@ -16,7 +16,7 @@ namespace BattleshipGame.DataStructures
 
         public Coordinate(int x, int y)
         {
-            if (x <= 0 || y <= 0)
+            if (x < 0 || y < 0)
             {
                 throw new ArgumentOutOfRangeException("Coordinates must be given in positive values");
             }

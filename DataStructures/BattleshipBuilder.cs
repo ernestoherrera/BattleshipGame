@@ -20,18 +20,18 @@ namespace BattleshipGame.DataStructures
             }
 
             var battleshipSize = coordinates.Length;
-            var battleshipParts = new BattleshipSquare[battleshipSize];
+            var battleshipSquares = new BattleshipSquare[battleshipSize];
             var counter = 0;
 
             foreach (var coord in coordinates)
             {
                 var bPart = new BattleshipSquare(coord);
 
-                battleshipParts[counter] = bPart;
+                battleshipSquares[counter] = bPart;
                 counter++;
             }
 
-            var battleship = new Battleship(battleshipParts);
+            var battleship = new Battleship(battleshipSquares);
 
             return battleship;
 

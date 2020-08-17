@@ -22,8 +22,14 @@ namespace BattleshipGame.DataStructures
         }
         public bool IsShot { get; set; }
 
+        /// <summary>
+        /// Position of the battleship part on the board
+        /// </summary>
         public Coordinate Coordinate { get { return this._coordinate; } }
 
+        /// <summary>
+        /// Next part of the battleship
+        /// </summary>
         public BattleshipSquare Next { get; set; }
 
     }
