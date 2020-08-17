@@ -10,8 +10,8 @@ namespace BattleshipGame.DataStructures
     internal class BattleshipBoard
     {
         private const int MINIMUM_BOARD_SIZE = 4;
-        //The Key value of the dictionary represent the Y coordinates
-        //The Value represents an array where the index represents the X coordinates.
+        //The Key value of the dictionary represent the X coordinates
+        //The Value represents an array where the index represents the Y coordinates.
         //This board is used to keep track of the ships and opponents shots
         private Dictionary<int, SeaSquare[]> _board = new Dictionary<int, SeaSquare[]>();
 
